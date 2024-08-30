@@ -11,7 +11,7 @@ public class IsometricViewShortcut
     private static float storedFOV;
     private static bool isPerspectiveStored = false;
 
-    private static readonly float lerpDuration = 0.5f; // Duration of the camera animation in seconds
+    private static readonly float lerpDuration = 0.25f; // Duration of the camera animation in seconds
     private static readonly float isometricFOV = 0.0125f;  // Field of view for isometric view
 
     static IsometricViewShortcut()
@@ -67,8 +67,6 @@ public class IsometricViewShortcut
         }
     }
 
-
-
     private static void SetIsometricView(SceneView sceneView, Quaternion targetRotation, Vector3 targetPivot)
     {
         if (!isPerspectiveStored && !sceneView.orthographic)
@@ -108,35 +106,40 @@ public class IsometricViewShortcut
         float timeElapsed = 0f;
         Vector3 initialPivot = sceneView.pivot;
         Quaternion initialRotation = sceneView.rotation;
+        float initialFOV = sceneView.cameraSettings.fieldOfView;
 
-        float initialFOV = toIsometric ? sceneView.cameraSettings.fieldOfView : isometricFOV;
+        if (toIsometric)
+        {
+            initialFOV = isometricFOV;
+        }
+
         if (!toIsometric)
         {
             sceneView.orthographic = false;
-        }    
+        }
+
+        float startTime = (float)EditorApplication.timeSinceStartup;
 
         while (timeElapsed < lerpDuration)
         {
+            float currentTime = (float)EditorApplication.timeSinceStartup;
+            timeElapsed = currentTime - startTime;
             float t = timeElapsed / lerpDuration;
             sceneView.rotation = Quaternion.Slerp(initialRotation, targetRotation, t);
             sceneView.pivot = Vector3.Lerp(initialPivot, targetPivot, t);
             sceneView.cameraSettings.fieldOfView = Mathf.Lerp(initialFOV, targetFOV, t);
-            timeElapsed += Time.deltaTime;
             sceneView.Repaint();
             yield return null;
         }
 
-        // Ensure the final values are set
         sceneView.rotation = targetRotation;
         sceneView.pivot = targetPivot;
         sceneView.cameraSettings.fieldOfView = targetFOV;
         sceneView.Repaint();
 
-        // Set the orthographic mode after the lerp to avoid mid-animation switch
         sceneView.orthographic = toIsometric;
         if (!toIsometric)
         {
-            // Clear stored perspective settings
             isPerspectiveStored = false;
         }
     }
