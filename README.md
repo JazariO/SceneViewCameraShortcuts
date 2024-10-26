@@ -6,7 +6,9 @@ Adjust the Unity Editor's scene view from the Numpad using the following hotkeys
 - Numpad 5: Toggle Isometric View
 - Numpad 9: Return to Origin in Perspective View
 
-#### Tested with Unity Version 2022.3.4f1
+#### Tested with Unity Versions:
+- 2022.3.4f1
+- 6000.0.24f1
 
 ## Installation
 1. Download the IsometricViewShortcut.cs file.
