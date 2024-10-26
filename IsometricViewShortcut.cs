@@ -28,18 +28,19 @@ public class IsometricViewShortcut
             switch (e.keyCode)
             {
                 case KeyCode.Keypad7:
-                    SetIsometricView(sceneView, Quaternion.Euler(90, 0, 0), Vector3.zero); // Top view
+                    SetIsometricView(sceneView, Quaternion.Euler(90, 0, 0)); // Top view
                     e.Use();
                     break;
                 case KeyCode.Keypad1:
-                    SetIsometricView(sceneView, Quaternion.Euler(0, 0, 0), Vector3.zero); // Front view
+                    SetIsometricView(sceneView, Quaternion.Euler(0, 0, 0)); // Front view
                     e.Use();
                     break;
                 case KeyCode.Keypad3:
-                    SetIsometricView(sceneView, Quaternion.Euler(0, 90, 0), Vector3.zero); // Side view
+                    SetIsometricView(sceneView, Quaternion.Euler(0, 90, 0)); // Side view
                     e.Use();
                     break;
                 case KeyCode.Keypad5:
+                case KeyCode.Alpha5: // Support both keypad and alphanumeric 5 for toggling
                     TogglePerspective(sceneView);
                     e.Use();
                     break;
@@ -63,15 +64,17 @@ public class IsometricViewShortcut
     {
         if (!sceneView.orthographic)
         {
-            sceneView.StartCoroutine(LerpCamera(sceneView, sceneView.rotation, sceneView.pivot, false, targetFOV));
+            EditorCoroutineUtility.StartCoroutine(LerpCamera(sceneView, sceneView.rotation, sceneView.pivot, false, targetFOV), sceneView);
         }
     }
 
-    private static void SetIsometricView(SceneView sceneView, Quaternion targetRotation, Vector3 targetPivot)
+    private static void SetIsometricView(SceneView sceneView, Quaternion targetRotation)
     {
+        Vector3 targetPivot = GetSelectedObjectPosition(sceneView);
+
         if (!isPerspectiveStored && !sceneView.orthographic)
         {
-            // Store perspective view settings
+            // Store perspective view settings (Position A)
             storedPosition = sceneView.pivot;
             storedRotation = sceneView.rotation;
             storedFOV = sceneView.camera.fieldOfView;
@@ -79,25 +82,27 @@ public class IsometricViewShortcut
         }
 
         sceneView.in2DMode = false; // Disable 2D mode if active.
-        sceneView.StartCoroutine(LerpCamera(sceneView, targetRotation, targetPivot, true, isometricFOV));
+        EditorCoroutineUtility.StartCoroutine(LerpCamera(sceneView, targetRotation, targetPivot, true, isometricFOV), sceneView);
     }
 
     private static void TogglePerspective(SceneView sceneView)
     {
+        Vector3 targetPivot = GetSelectedObjectPosition(sceneView);
+
         if (sceneView.orthographic && isPerspectiveStored)
         {
-            // Animate the transition back to the stored perspective view and FOV
-            sceneView.StartCoroutine(LerpCamera(sceneView, storedRotation, storedPosition, false, storedFOV));
+            // Return to stored perspective view settings (Position A)
+            EditorCoroutineUtility.StartCoroutine(LerpCamera(sceneView, storedRotation, storedPosition, false, storedFOV), sceneView);
         } else if (!sceneView.orthographic)
         {
-            // Store the current perspective view settings before switching to isometric
+            // Store the current perspective view settings (Position A) before switching to isometric
             storedPosition = sceneView.pivot;
             storedRotation = sceneView.rotation;
             storedFOV = sceneView.camera.fieldOfView;
             isPerspectiveStored = true;
 
-            // Switch to isometric view with the same pivot and FOV
-            sceneView.StartCoroutine(LerpCamera(sceneView, Quaternion.Euler(30, 45, 0), storedPosition, true, isometricFOV));
+            // Switch to isometric view with the selected object pivot (or scene center if none)
+            EditorCoroutineUtility.StartCoroutine(LerpCamera(sceneView, Quaternion.Euler(30, 45, 0), targetPivot, true, isometricFOV), sceneView);
         }
     }
 
@@ -144,19 +149,25 @@ public class IsometricViewShortcut
         }
     }
 
+    private static Vector3 GetSelectedObjectPosition(SceneView sceneView)
+    {
+        if (Selection.activeTransform != null)
+        {
+            return Selection.activeTransform.position;
+        }
+        return sceneView.pivot; // Default to current pivot if nothing is selected
+    }
 
     private static void LookAtOriginFrom6thOctant(SceneView sceneView)
     {
-        // Position 10 units away from the origin in the 6th octant
         Vector3 targetPosition = new Vector3(-10, 10, -10);
-        Quaternion targetRotation = Quaternion.LookRotation(Vector3.zero - targetPosition); // Look at the origin
+        Quaternion targetRotation = Quaternion.LookRotation(Vector3.zero - targetPosition);
 
-        // Directly set the perspective mode if it's currently orthographic
         if (sceneView.orthographic)
         {
             sceneView.orthographic = false;
         }
 
-        sceneView.StartCoroutine(LerpCamera(sceneView, targetRotation, Vector3.zero, false, storedFOV));
+        EditorCoroutineUtility.StartCoroutine(LerpCamera(sceneView, targetRotation, Vector3.zero, false, storedFOV), sceneView);
     }
 }
