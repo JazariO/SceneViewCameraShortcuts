@@ -10,5 +10,6 @@ Adjust the Unity Editor's scene view from the Numpad using the following hotkeys
 
 ## Installation
 1. Download the IsometricViewShortcut.cs file.
+2. Go to the Package Manager window and download the package called 'Editor Coroutines' from the Unity Registry. This is required for the camera animations.
 2. Import file into a Unity Editor folder, usually created at Assets\Editor.
-3. Use Numpad shortcuts listed above to control the scene view camera.
+3. With the scene window selected - use the numpad shortcuts listed above to control the scene view camera.
